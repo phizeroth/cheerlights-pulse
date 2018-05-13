@@ -6,15 +6,15 @@ FASTLED_USING_NAMESPACE;
 // Simple CheerLights Pulsing NeoPixel
 // -------------------------------------
 
-const byte led7 = D7;       // built-in LED
-const byte dataPin = D0;    // data pin for NeoPixel
-bool toggle = 1;            // on/off toggle for Particle function ledToggle
+#define LED7 D7        // built-in LED
+#define DATA_PIN D0    // data pin for NeoPixel
 
 const byte numLEDs = 1;     // Number of LEDs on NeoPixel strip
 CRGB leds[numLEDs];         // Create FastLED object for NeoPixel strip
 
 const short cheerLightsChannelNumber = 1417;
 unsigned long milliseconds;
+bool toggle = 1;            // on/off toggle for Particle function ledToggle
 
 TCPClient client;
 
@@ -25,12 +25,12 @@ void setup()
 {
     Serial.begin(9600);
 
-    FastLED.addLeds<NEOPIXEL, dataPin>(leds, numLEDs);
+    FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, numLEDs);
     FastLED.clear();
 
     ThingSpeak.begin(client);
 
-    pinMode(led7, OUTPUT);
+    pinMode(LED7, OUTPUT);
 
     // Initialize Particle functions and variables
     Particle.function("ledToggle", ledToggle);      // Turns LED on/off
@@ -90,6 +90,7 @@ int8_t setColor(String color)
             // Create HSV color object for FastLED
             CHSV hsv(colorsHSV[i][0], colorsHSV[i][1], colorsHSV[i][2]);
             milliseconds = millis();            // start time for LED pulse
+            
             // LED pulsing sin wave function
             short deg = 270;                    // Starting point in degrees (90 = led high, 270 = led low)
             byte numCycles = 5;                 // Change this value for number of pulse cycles
@@ -100,15 +101,11 @@ int8_t setColor(String color)
                 hsv.val = constrain(val, 0, 255);
                 leds[0] = hsv;
                 FastLED.show();
-                delay(30);
+                delay(80);
             }
             // Print cycle time
             Serial.print(F("LED cycle time: "));
             Serial.print(F(millis() - milliseconds));
-            Serial.println(F(" ms"));
-            // Print total uptime
-            Serial.print(F("Total uptime: "));
-            Serial.print(F(millis()));
             Serial.println(F(" ms"));
 
             // Set string for Particle variable cheerHSV
@@ -128,13 +125,13 @@ int8_t setColor(String color)
 int8_t ledToggle(String command)
 {
     if (command == "on") {
-        digitalWrite(led7, LOW);
+        digitalWrite(LED7, LOW);
         setColor(cheerColor);
         toggle = 1;
         return toggle;
     }
     else if (command == "off") {
-        digitalWrite(led7, HIGH);
+        digitalWrite(LED7, HIGH);
         toggle = 0;
         return toggle;
     }
@@ -151,13 +148,13 @@ byte testColor(String color)
     testColorHSV = String(col);
 
     // Set values for test color in colors array
-    colorsHSV[13][0] = testHSV[0];
-    colorsHSV[13][1] = testHSV[1];
-    colorsHSV[13][2] = testHSV[2];
+    for (int i = 0; i < 3; i++) {
+        colorsHSV[13][i] = testHSV[i];
+    }
     return setColor(color);
 }
 
-// Individually set hue, sat, and val for test color
+// Individually set hue, sat, and val for test color. (Particle requires String args)
 byte setTestHue(String hue)
 {
     testHSV[0] = hue.toInt();
